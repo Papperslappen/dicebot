@@ -1,5 +1,3 @@
-extern crate rand;
-extern crate pom;
 use rand::distributions::{Uniform,Distribution};
 use pom::parser::*;
 use std::str::{self, FromStr};
@@ -8,21 +6,21 @@ use std::str::{self, FromStr};
 pub enum ExpressionTree{
     Sum(Vec<ExpressionTree>),
     Negative(Box<ExpressionTree>),
-    Constant(i32),
-    Uniform(i32,i32)
+    Constant(i64),
+    Uniform(i64,i64)
 }
 
 impl ExpressionTree {
-    pub fn eval(&self) -> i32{
+    pub fn eval(&self) -> i64{
         match self{
             ExpressionTree::Constant(i) => {*i},
             ExpressionTree::Uniform(i,j) => {
                 let dice = Uniform::new_inclusive(i,j);
                 let mut rng = rand::thread_rng();
-                dice.sample(&mut rng) as i32
+                dice.sample(&mut rng) as i64
             },
             ExpressionTree::Sum(v) => {
-                v.iter().fold(0i32,|acc,x| acc+x.eval())
+                v.iter().fold(0i64,|acc,x| acc+x.eval())
             }
             ExpressionTree::Negative(e) => {
                 0 - e.eval()
@@ -37,20 +35,20 @@ fn space<'a>() -> Parser<'a,u8,()> {
 }
 
 //matches integers
-fn integer<'a>() -> Parser<'a,u8,i32> {
+fn integer<'a>() -> Parser<'a,u8,i64> {
     let number = sym(b'-').opt() + one_of(b"0123456789").repeat(1..);
     number.collect()
         .convert(str::from_utf8)
-        .convert(|s|{i32::from_str(s)})
+        .convert(|s|{i64::from_str(s)})
 }
 
 //matches positive nonzero integers
-fn positive_integer<'a>() -> Parser<'a,u8, i32>{
+fn positive_integer<'a>() -> Parser<'a,u8, i64>{
     (one_of(b"123456789") + one_of(b"0123456789")
         .repeat(0..))
         .collect()
         .convert(str::from_utf8)
-        .convert(|s|{i32::from_str(s)})
+        .convert(|s|{i64::from_str(s)})
 }
 
 //parses a number into an ExpressionTree::Constant
@@ -119,7 +117,7 @@ pub fn dice_parser<'a>() -> Parser<'a,u8,ExpressionTree> {
 
 
 
-pub fn parse(s:String) -> Result<i32,&'static str> {
+pub fn parse(s:String) -> Result<i64,&'static str> {
     let p = dice_parser();
     if let Ok(p) = p.parse(s.as_bytes()){
         Ok(p.eval())
