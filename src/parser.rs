@@ -5,6 +5,7 @@ use std::str::{self, FromStr};
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ExpressionTree{
     Sum(Vec<ExpressionTree>),
+    Mult(i64,Box<ExpressionTree>),
     Negative(Box<ExpressionTree>),
     Constant(i64),
     Uniform(i64,i64)
@@ -21,6 +22,9 @@ impl ExpressionTree {
             },
             ExpressionTree::Sum(v) => {
                 v.iter().fold(0i64,|acc,x| acc+x.eval())
+            },
+            ExpressionTree::Mult(n,e) => {
+                (0 .. *n).fold(0, |acc,_| acc + e.eval())
             }
             ExpressionTree::Negative(e) => {
                 0 - e.eval()
@@ -63,7 +67,7 @@ fn die<'a>() -> Parser<'a,u8,ExpressionTree>{
         match n {
             // For example 2d8
             Some(i) if i > 1 => {
-                ExpressionTree::Sum(vec!(ExpressionTree::Uniform(1,d);i as usize))
+                ExpressionTree::Mult(i,Box::new(ExpressionTree::Uniform(1,d)))
             }
             // 1d6 or d10
             Some(_) | None => {
@@ -115,8 +119,6 @@ pub fn dice_parser<'a>() -> Parser<'a,u8,ExpressionTree> {
     expression() - end()
 }
 
-
-
 pub fn parse(s:String) -> Result<i64,&'static str> {
     let p = dice_parser();
     if let Ok(p) = p.parse(s.as_bytes()){
@@ -138,8 +140,9 @@ mod tests {
     fn parse_die(){
         let parser = super::die();
         let input = b"2d8";
-        assert_eq!(Ok(super::ExpressionTree::Sum(vec!(super::ExpressionTree::Uniform(1,8),super::ExpressionTree::Uniform(1,8)))),parser.parse(input));
+                assert_eq!(Ok(super::ExpressionTree::Mult(2, Box::new(super::ExpressionTree::Uniform(1, 8)))),parser.parse(input));
     }
+
     #[test]
     fn parse_negative(){
         let parser = super::negative();
