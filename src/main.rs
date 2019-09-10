@@ -8,6 +8,8 @@ mod parser;
 use parser::parse;
 
 use std::str;
+use std::env;
+use std::io::{self,BufRead};
 
 
 #[get("/")]
@@ -24,7 +26,17 @@ fn roll(s:String) -> JsonValue {
     }
 }
 
-
 fn main() {
-    rocket::ignite().mount("/", routes![index,roll]).launch();
+    if env::args().any(|s| s=="--cmd") {
+        println!("CMD mode");
+        let stdin = io::stdin();
+        for line in stdin.lock().lines() {
+            if let Ok(result) = parse(line.unwrap()){
+                println!("{}",result);
+            }
+        }
+    }
+    else {
+        rocket::ignite().mount("/", routes![index,roll]).launch();
+    }
 }
