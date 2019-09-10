@@ -1,0 +1,11 @@
+/target
+**/*.rs.bk
+Cargo.lock
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*s
