@@ -123,11 +123,11 @@ fn expression<'a>() -> Parser<'a,u8,ExpressionTree> {
 }
 
 pub fn simple_dice_parser<'a>() -> Parser<'a,u8,ExpressionTree> {
-    expression()
+    expression() - end()
 }
 
 pub fn parse(s:String) -> Result<ExpressionTree,&'static str> {
-    let p = dice_parser();
+    let p = simple_dice_parser();
     if let Ok(p) = p.parse(s.as_bytes()){
         Ok(p)
     } else {
