@@ -19,9 +19,9 @@ fn index() -> &'static str {
 
 #[get("/roll/<s>")]
 fn roll(s:String) -> JsonValue {
-    let result = parse(s);
-    match result {
-        Ok(roll_result) => json!({"result":roll_result}),
+    let parsed_expression = parse(s);
+    match  parsed_expression{
+        Ok(expression) => json!({"result":expression.eval(),"trivial":expression.trivial()}),
         Err(_) => json!({})
     }
 }
@@ -32,7 +32,7 @@ fn main() {
         let stdin = io::stdin();
         for line in stdin.lock().lines() {
             if let Ok(result) = parse(line.unwrap()){
-                println!("{}",result);
+                println!("{}",result.eval());
             }
         }
     }

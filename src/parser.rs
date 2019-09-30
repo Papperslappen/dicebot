@@ -31,6 +31,13 @@ impl ExpressionTree {
             }
         }
     }
+    pub fn trivial(&self) -> bool{
+        match self{
+            ExpressionTree::Constant(_) =>
+                true,
+            _ => false
+        }
+    }
 }
 
 //matches whitespace
@@ -115,14 +122,14 @@ fn expression<'a>() -> Parser<'a,u8,ExpressionTree> {
     ) - space().opt()
 }
 
-pub fn dice_parser<'a>() -> Parser<'a,u8,ExpressionTree> {
-    expression() - end()
+pub fn simple_dice_parser<'a>() -> Parser<'a,u8,ExpressionTree> {
+    expression()
 }
 
-pub fn parse(s:String) -> Result<i64,&'static str> {
+pub fn parse(s:String) -> Result<ExpressionTree,&'static str> {
     let p = dice_parser();
     if let Ok(p) = p.parse(s.as_bytes()){
-        Ok(p.eval())
+        Ok(p)
     } else {
         Err("not parsable")
     }
