@@ -38,6 +38,27 @@ impl ExpressionTree {
             _ => false
         }
     }
+
+    pub fn bounds(&self) -> (i64,i64){
+        match self {
+            ExpressionTree::Constant(i) => (*i,*i),
+            ExpressionTree::Uniform(i,j) => (*i,*j),
+            ExpressionTree::Sum(v) => {
+                v.iter().fold((0i64,0i64),|(lower,upper),x| {
+                    let (l,u) = x.bounds();
+                    (lower + l, upper + u)
+                })
+            },
+            ExpressionTree::Mult(n,e) =>{
+                let (l,u) = e.bounds();
+                (n*l,n*u)
+            }
+            ExpressionTree::Negative(e) => {
+                let (l,u) = e.bounds();
+                (-u,-l)
+            }    
+        }
+    }
 }
 
 //matches whitespace

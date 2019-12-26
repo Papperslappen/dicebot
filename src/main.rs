@@ -27,12 +27,12 @@ fn roll(s:String) -> JsonValue {
 }
 
 fn main() {
-    if env::args().any(|s| s=="--cmd") {
+    if env::args().any(|s| s=="cmd") {
         println!("CMD mode");
         let stdin = io::stdin();
         for line in stdin.lock().lines() {
             if let Ok(result) = parse(line.unwrap()){
-                println!("{}",result.eval());
+                println!("{} bounds: {:?}",result.eval(),result.bounds());
             }
         }
     }
