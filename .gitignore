@@ -9,3 +9,4 @@ Cargo.lock
 auto-save-list
 tramp
 .\#*s
+.DS_Store
