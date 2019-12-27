@@ -56,7 +56,20 @@ impl ExpressionTree {
             ExpressionTree::Negative(e) => {
                 let (l,u) = e.bounds();
                 (-u,-l)
-            }    
+            }
+        }
+    }
+    pub fn size(&self) -> i64{
+        match self {
+            ExpressionTree::Constant(_) => 1,
+            ExpressionTree::Uniform(_,_) => 1,
+            ExpressionTree::Sum(v) => {
+                v.iter().fold(0i64,|acc,x| acc+x.size())
+            },
+            ExpressionTree::Mult(n,e) =>{
+                n*e.size()
+            }
+            ExpressionTree::Negative(_) => 1
         }
     }
 }

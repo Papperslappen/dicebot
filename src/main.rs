@@ -21,7 +21,15 @@ fn index() -> &'static str {
 fn roll(s:String) -> JsonValue {
     let parsed_expression = parse(s);
     match  parsed_expression{
-        Ok(expression) => json!({"result":expression.eval(),"trivial":expression.trivial()}),
+        Ok(expression) => {
+            if expression.size() <= 1001 {
+                json!({"result":expression.eval(),
+                       "trivial":expression.trivial(),
+                       "size":expression.size()})
+                } else {
+                    json!({})
+                }
+        },
         Err(_) => json!({})
     }
 }
@@ -32,7 +40,7 @@ fn main() {
         let stdin = io::stdin();
         for line in stdin.lock().lines() {
             if let Ok(result) = parse(line.unwrap()){
-                println!("{} bounds: {:?}",result.eval(),result.bounds());
+                println!("{} size: {} bounds: {:?}",result.eval(),result.size(),result.bounds());
             }
         }
     }
