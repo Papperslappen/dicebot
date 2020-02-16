@@ -23,7 +23,7 @@ fn roll(s:String) -> JsonValue {
     match  parsed_expression{
         Ok(expression) => {
             if expression.size() <= 1001 {
-                json!({"result":expression.eval(),
+                json!({"result":expression.roll(),
                        "trivial":expression.trivial(),
                        "size":expression.size()})
                 } else {
@@ -40,7 +40,7 @@ fn main() {
         let stdin = io::stdin();
         for line in stdin.lock().lines() {
             if let Ok(result) = parse(line.unwrap()){
-                println!("{} size: {} bounds: {:?}",result.eval(),result.size(),result.bounds());
+                println!("{:?} size: {}",result.roll(),result.size());
             }
         }
     }
