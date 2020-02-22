@@ -5,6 +5,8 @@
 use rocket_contrib::json::JsonValue;
 
 mod parser;
+mod expressiontree;
+
 use parser::parse;
 
 use std::str;
