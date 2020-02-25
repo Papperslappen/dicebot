@@ -1,49 +1,47 @@
 use rand::distributions::{Uniform,Distribution};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub enum DiceExpressionTree{
-    Many(Vec<DiceExpressionTree>),
-    Sum(Box<DiceExpressionTree>),
-    Mult(i64,Box<DiceExpressionTree>),
-    Product(Box<DiceExpressionTree>),
-    Negative(Box<DiceExpressionTree>),
+pub enum DiceExpression{
+    Many(Vec<DiceExpression>),
+    Sum(Box<DiceExpression>),
+    Product(Box<DiceExpression>),
+    Negative(Box<DiceExpression>),
     Constant(i64),
     Die(i64)
 }
 
-pub type EvaluationResult = Vec<i64>;
+use DiceExpression::*;
 
-impl DiceExpressionTree {
-    pub fn roll(&self) -> EvaluationResult{
+pub type Roll = Vec<i64>;
+
+impl DiceExpression {
+    pub fn roll(&self) -> Roll{
         match self{
-            DiceExpressionTree::Constant(i) => {vec![*i]},
-            DiceExpressionTree::Die(sides) => {
+            Constant(i) => {vec![*i]},
+            Die(sides) => {
                 let dice = Uniform::new_inclusive(1,sides);
                 let mut rng = rand::thread_rng();
                 vec![dice.sample(&mut rng) as i64]
             },
-            DiceExpressionTree::Sum(e) => {
+            Sum(e) => {
                 vec![e.roll().iter().fold(0i64,|acc,x| acc+x)]
             },
-            DiceExpressionTree::Product(e) => {
+            Product(e) => {
                 vec![e.roll().iter().fold(1i64,|acc,x| acc*x)]
             },
-            DiceExpressionTree::Mult(n,e) => {
-                //e.roll().iter().map(|x| n*x).collect()
-                (1 .. *n).fold(e.roll(), |acc,_| acc.iter().zip(e.roll().iter()).map(|(x,y)| x+y).collect())
-
-            }
-            DiceExpressionTree::Negative(e) => {
+            Negative(e) => {
                 e.roll().iter().map(|x| 0-x).collect()
             }
-            DiceExpressionTree::Many(v) => {
+            Many(v) => {
                 v.iter().map(|x| x.roll()).flatten().collect()
             }
         }
     }
+
+    // Return true if only a single constant
     pub fn trivial(&self) -> bool{
         match self{
-            DiceExpressionTree::Constant(_) =>
+            Constant(_) =>
                 true,
             _ => false
         }
@@ -51,36 +49,68 @@ impl DiceExpressionTree {
 
     // pub fn bounds(&self) -> (i64,i64){
     //     match self {
-    //         DiceExpressionTree::Constant(i) => (*i,*i),
-    //         DiceExpressionTree::Die(i) => (1,*j),
-    //         DiceExpressionTree::Sum(v) => {
+    //         DiceExpression::Constant(i) => (*i,*i),
+    //         DiceExpression::Die(i) => (1,*j),
+    //         DiceExpression::Sum(v) => {
     //             v.iter().fold((0i64,0i64),|(lower,upper),x| {
     //                 let (l,u) = x.bounds();
     //                 (lower + l, upper + u)
     //             })
     //         },
-    //         DiceExpressionTree::Mult(n,e) =>{
+    //         DiceExpression::Mult(n,e) =>{
     //             let (l,u) = e.bounds();
     //             (n*l,n*u)
     //         }
-    //         DiceExpressionTree::Negative(e) => {
+    //         DiceExpression::Negative(e) => {
     //             let (l,u) = e.bounds();
     //             (-u,-l)
     //         }
     //     }
     // }
+
+    // Return the number of elements
     pub fn size(&self) -> i64{
         match self {
-            DiceExpressionTree::Many(v) => {
+            Many(v) => {
                 v.iter().fold(0i64,|acc,x| acc+x.size())
             }
-            DiceExpressionTree::Sum(e) => {
+            Sum(e) | DiceExpression::Product(e) => {
                 e.size()
             },
-            DiceExpressionTree::Mult(n,e) =>{
-                n*e.size()
-            }
             _ => 1
         }
     }
+
+    pub fn sum(self) -> DiceExpression {
+        Sum(Box::new(self))
+    }
+
+    pub fn add(self, other : DiceExpression) -> DiceExpression {
+        Sum(Box::new(Many(vec!(self,other))))
+    }
+
+    pub fn negate(self) -> DiceExpression{
+        Negative(Box::new(self))
+    }
+
+    pub fn subtract(self, other : DiceExpression) -> DiceExpression {
+        self.add(other.negate())
+    }
+
+    pub fn multiply(self, other : DiceExpression) -> DiceExpression {
+        self.add(other.negate())
+    }
+
+    pub fn also(self, other : DiceExpression) -> DiceExpression {
+        Many(vec!(self,other))
+    }
+
+    pub fn repeat(self, times: i64) -> DiceExpression {
+        if times>1 {
+            Many((0..times).map(|_|self.clone()).collect())
+        } else {
+            self
+        }
+    }
+
 }
