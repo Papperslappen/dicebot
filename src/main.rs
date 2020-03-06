@@ -42,7 +42,7 @@ fn main() {
         let stdin = io::stdin();
         for line in stdin.lock().lines() {
             if let Ok(result) = parse(line.unwrap()){
-                println!("{:?} size: {}",result.roll(),result.size());
+                println!("{:?} size: {} debug: {:?}",result.roll(),result.size(),result);
             }
         }
     }
