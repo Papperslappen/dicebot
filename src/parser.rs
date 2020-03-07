@@ -47,6 +47,8 @@ fn die<'a>() -> Parser<'a,u8,DiceExpression>{
     })
 }
 
+
+
 //unary minus
 fn negative<'a>() -> Parser<'a,u8,DiceExpression> {
     (sym(b'-') * space().opt() * call(leaf)).map(|e|e.negate())
@@ -67,10 +69,9 @@ fn sum<'a>() -> Parser<'a,u8,DiceExpression> {
     (seq(b"sum") * space().opt() * call(leaf)).map(|e|e.sum())
 }
 
-
 //Sum
 fn plus<'a>() -> Parser<'a,u8,DiceExpression> {
-    (call(expression) - sym(b'+') + leaf())
+    (leaf() - sym(b'+') + call(expression))
         .map(|(e,f)| e.add(f))
 }
 
@@ -80,9 +81,9 @@ fn minus<'a>() -> Parser<'a,u8,DiceExpression> {
         .map(|(e,f)| e.subtract(f))
 }
 
-//Difference
+//Multiply
 fn multiply<'a>() -> Parser<'a,u8,DiceExpression> {
-    (leaf() - sym(b'*') + leaf())
+    ((die() | constant() | parenthesis()) - sym(b'*') + call(leaf))
         .map(|(e,f)| e.multiply(f))
 }
 
@@ -102,11 +103,29 @@ fn gt<'a>() -> Parser<'a,u8,DiceExpression> {
     (leaf() - sym(b'>') + call(expression))
         .map(|(e,f)| e.gt(f))
 }
+// repeat expression n times
+fn repeat_many<'a>() -> Parser<'a,u8,DiceExpression> {
+    (positive_integer() - sym(b'.') + call(leaf))
+        .map(|(i,e)| e.repeat(i))
+}
+
+// multiple expressions separated by whitespace
+fn many<'a>() -> Parser<'a,u8,DiceExpression> {
+    (leaf() - sym(b',') - space().opt() + call(expression))
+        .map(|(u,v)| u.also(v))
+}
+
+// matches any expression in parenthesis
+fn parenthesis<'a>() -> Parser<'a,u8,DiceExpression> {
+    sym(b'(') * space().opt() * call(expression) - space().opt() - sym(b')')
+}
+
 
 //non compound expression trees (no sums)
 fn leaf<'a>() -> Parser<'a,u8,DiceExpression> {
     space().opt() *
-    ( repeat_many()
+    ( multiply()
+    | repeat_many()
     | die()
     | parenthesis()
     | constant()
@@ -117,27 +136,9 @@ fn leaf<'a>() -> Parser<'a,u8,DiceExpression> {
     -space().opt()
 }
 
-// matches any expression in parenthesis
-fn parenthesis<'a>() -> Parser<'a,u8,DiceExpression> {
-    sym(b'(') * space().opt() * call(expression) - space().opt() - sym(b')')
-}
-
-// multiple expressions separated by whitespace
-fn many<'a>() -> Parser<'a,u8,DiceExpression> {
-    (leaf() - sym(b',') - space().opt() + call(expression))
-        .map(|(u,v)| u.also(v))
-}
-
-// repeat expression n times
-fn repeat_many<'a>() -> Parser<'a,u8,DiceExpression> {
-    (positive_integer() - sym(b'.') + call(leaf))
-        .map(|(i,e)| e.repeat(i))
-}
-
 fn expression<'a>() -> Parser<'a,u8,DiceExpression> {
     space().opt() *
     ( many()
-    | multiply()
     | plus()
     | minus()
     | lt()
@@ -163,11 +164,21 @@ pub fn parse(s:String) -> Result<DiceExpression,&'static str> {
 
 #[cfg(test)]
 mod tests {
+    use super::DiceExpression::*;
+
+
+
     #[test]
-    fn parse_constant(){
-        let parser = super::constant();
+    fn constant(){
+        let constant_parser = super::constant();
         let input = b"2";
-        assert_eq!(Ok(super::DiceExpression::Constant(2)),parser.parse(input));
+        assert_eq!(Ok(Constant(2)),constant_parser.parse(input));
+    }
+
+    #[test]
+    fn die(){
+        let simple_parser = super::simple_dice_parser();
+        assert_eq!(Ok(Die(6)),simple_parser.parse(b"d6"));
     }
 
 }

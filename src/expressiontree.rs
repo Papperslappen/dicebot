@@ -126,9 +126,12 @@ impl DiceExpression {
     pub fn negate(self) -> DiceExpression{
         Negative(Box::new(self))
     }
-
     pub fn subtract(self, other : DiceExpression) -> DiceExpression {
         self.add(other.negate())
+    }
+
+    pub fn multiply(self, other : DiceExpression) -> DiceExpression {
+        Multiply(Box::new(self),Box::new(other))
     }
 
     pub fn also(self, other : DiceExpression) -> DiceExpression {
