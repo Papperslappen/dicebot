@@ -1,5 +1,8 @@
+use std::fmt;
+
 use rand::distributions::{Uniform,Distribution};
 use itertools::Itertools;
+
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum DiceExpression{
@@ -14,10 +17,56 @@ pub enum DiceExpression{
     LessThan(Box<DiceExpression>,Box<DiceExpression>),
     Negative(Box<DiceExpression>),
     Constant(i64),
-    Die(i64)
+    Die(i64),
+    Outcome(i64,i64)
 }
 
 use DiceExpression::*;
+
+
+impl fmt::Display for DiceExpression {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self{
+            Constant(i) => {write!(f,"{}",i)},
+            Die(sides) => {
+                write!(f,"d{}",sides)
+            },
+            Sum(e) => {
+                write!(f,"sum{}",e)
+            },
+            Product(e) => {
+                write!(f,"prod{}",e)
+            },
+            Negative(e) => {
+                write!(f,"-{}",e)
+            },
+            Max(e) => {
+                write!(f,"max {}",e)
+            }
+            Min(e) => {
+                write!(f,"min {}",e)
+            }
+            Add(left,right) => {
+                write!(f,"{} + {}",left,right)
+            },
+            Multiply(left,right) => {
+                write!(f,"{} * {}",left,right)
+            },
+            Equal(left,right) => {
+                write!(f,"{} = {}",left,right)
+            },
+            LessThan(left,right) => {
+                write!(f,"{} < {}",left,right)
+            },
+            Many(v) => {
+                write!(f,"({})",v.iter().fold(String::new(),|acc,val| acc+format!("{}",val).as_str()+",").trim_end_matches(','))
+            },
+            Outcome(sides,result) => {
+                write!(f,"d{}:{}",sides,result)
+            }
+        }
+    }
+}
 
 pub type Roll = Vec<i64>;
 
@@ -59,10 +108,53 @@ impl DiceExpression {
             },
             Many(v) => {
                 v.iter().map(|x| x.roll()).flatten().collect()
-            }
+            },
+            Outcome(_,result) => vec!(*result)
         }
     }
 
+
+    pub fn outcome(&self) -> DiceExpression {
+        match self{
+            Constant(i) => Constant(*i),
+            Die(sides) => {
+                let dice = Uniform::new_inclusive(1,sides);
+                let mut rng = rand::thread_rng();
+                Outcome(*sides,dice.sample(&mut rng) as i64)
+            },
+            Sum(e) => {
+                Sum(Box::new(e.outcome()))
+            },
+            Product(e) => {
+                Product(Box::new(e.outcome()))
+            },
+            Negative(e) => {
+                Negative(Box::new(e.outcome()))
+            },
+            Max(e) => {
+                Max(Box::new(e.outcome()))
+            }
+            Min(e) => {
+                Min(Box::new(e.outcome()))
+            }
+            Add(left,right) => {
+                Add(Box::new(left.outcome()),Box::new(right.outcome()))
+            },
+            Multiply(left,right) => {
+                Multiply(Box::new(left.outcome()),Box::new(right.outcome()))
+            },
+            Equal(left,right) => {
+                Equal(Box::new(left.outcome()),Box::new(right.outcome()))
+            },
+            LessThan(left,right) => {
+                LessThan(Box::new(left.outcome()),Box::new(right.outcome()))
+            },
+            Many(v) => {
+                Many(v.iter().map(|x| x.outcome()).collect())
+            },
+            Outcome(sides,result) => Outcome(*sides,*result)
+        }
+    }
 
 
     // Return true if only a single constant

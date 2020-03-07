@@ -42,7 +42,8 @@ fn main() {
         let stdin = io::stdin();
         for line in stdin.lock().lines() {
             if let Ok(result) = parse(line.unwrap()){
-                println!("{:?} size: {} debug: {:?}",result.roll(),result.size(),result);
+                let roll = result.outcome();
+                println!("{} = {:?}",roll,roll.roll());
             }
         }
     }
