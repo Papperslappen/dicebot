@@ -43,7 +43,7 @@ fn main() {
         for line in stdin.lock().lines() {
             if let Ok(result) = parse(line.unwrap()){
                 let roll = result.outcome();
-                println!("{} = {:?}",roll,roll.roll());
+                println!("{} = {:?} , size: {}",roll,roll.roll(),roll.size());
             }
         }
     }

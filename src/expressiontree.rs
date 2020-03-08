@@ -23,6 +23,11 @@ pub enum DiceExpression{
 
 use DiceExpression::*;
 
+impl From<i64> for DiceExpression {
+    fn from(val: i64) -> Self {
+        Constant(val)
+    }
+}
 
 impl fmt::Display for DiceExpression {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -32,34 +37,66 @@ impl fmt::Display for DiceExpression {
                 write!(f,"d{}",sides)
             },
             Sum(e) => {
-                write!(f,"sum{}",e)
+                write!(f,"sum({})",e)
             },
             Product(e) => {
-                write!(f,"prod{}",e)
+                write!(f,"prod({})",e)
             },
             Negative(e) => {
-                write!(f,"-{}",e)
+                if e.size() > 1 {
+                    write!(f,"-({})",e)
+                } else {
+                    write!(f,"-{}",e)
+                }
             },
             Max(e) => {
-                write!(f,"max {}",e)
+                write!(f,"max({})",e)
             }
             Min(e) => {
-                write!(f,"min {}",e)
+                write!(f,"min({})",e)
             }
             Add(left,right) => {
                 write!(f,"{} + {}",left,right)
             },
             Multiply(left,right) => {
-                write!(f,"{} * {}",left,right)
+                if right.size() > 1 {
+                    write!(f,"{} * ({})",left,right)
+                }else{
+                    write!(f,"{} * {}",left,right)
+                }
             },
             Equal(left,right) => {
-                write!(f,"{} = {}",left,right)
+                let mut form = String::from("");
+                if left.size() > 1 {
+                    form = form + &format!("({})",left);
+                }else {
+                    form = form + &format!("{}",left);
+                }
+                form = form + " = ";
+                if right.size() > 1 {
+                    form = form + &format!("({})",right);
+                }else {
+                    form = form + &format!("{}",right);
+                }
+                write!(f,"{}",form)
             },
             LessThan(left,right) => {
-                write!(f,"{} < {}",left,right)
+                let mut form = String::from("");
+                if left.size() > 1 {
+                    form = form + &format!("({})",left);
+                }else {
+                    form = form + &format!("{}",left);
+                }
+                form = form + " < ";
+                if right.size() > 1 {
+                    form = form + &format!("({})",right);
+                }else {
+                    form = form + &format!("{}",right);
+                }
+                write!(f,"{}",form)
             },
             Many(v) => {
-                write!(f,"({})",v.iter().fold(String::new(),|acc,val| acc+format!("{}",val).as_str()+",").trim_end_matches(','))
+                write!(f,"{}",v.iter().fold(String::new(),|acc,val| acc+format!("{}",val).as_str()+",").trim_end_matches(','))
             },
             Outcome(sides,result) => {
                 write!(f,"d{}:{}",sides,result)
@@ -201,9 +238,9 @@ impl DiceExpression {
             | Multiply(l,r)
             | Equal(l,r)
             | LessThan(l,r) => {
-                l.size() * r.size()
+                l.size() + r.size()
             },
-            _ => 1
+            Constant(_) | Die(_) | Outcome(_,_) => 1
         }
     }
 
