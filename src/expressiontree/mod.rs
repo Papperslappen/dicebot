@@ -1,11 +1,11 @@
 use std::fmt;
 pub mod roll;
+pub mod probability;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum DiceExpression{
     Many(Vec<DiceExpression>),
     Sum(Box<DiceExpression>),
-    Product(Box<DiceExpression>),
     Max(Box<DiceExpression>),
     Min(Box<DiceExpression>),
     Add(Box<DiceExpression>,Box<DiceExpression>),
@@ -35,9 +35,6 @@ impl fmt::Display for DiceExpression {
             },
             Sum(e) => {
                 write!(f,"sum({})",e)
-            },
-            Product(e) => {
-                write!(f,"prod({})",e)
             },
             Negative(e) => {
                 if e.size() > 1 {
@@ -115,7 +112,7 @@ impl DiceExpression {
     // Return the number of elements
     pub fn size(&self) -> i64{
         match self {
-            Sum(e) | Product(e) | Negative(e) | Min(e) | Max(e) => {
+            Sum(e) | Negative(e) | Min(e) | Max(e) => {
                 e.size()
             },
             Many(v) => {

@@ -16,9 +16,6 @@ impl DiceExpression {
             Sum(e) => {
                 vec![e.roll().iter().fold(0i64,|acc,x| acc+x)]
             },
-            Product(e) => {
-                vec![e.roll().iter().fold(1i64,|acc,x| acc*x)]
-            },
             Negative(e) => {
                 e.roll().iter().map(|x| 0-x).collect()
             },
@@ -58,9 +55,6 @@ impl DiceExpression {
             },
             Sum(e) => {
                 Sum(Box::new(e.outcome()))
-            },
-            Product(e) => {
-                Product(Box::new(e.outcome()))
             },
             Negative(e) => {
                 Negative(Box::new(e.outcome()))
