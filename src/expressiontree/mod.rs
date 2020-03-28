@@ -128,6 +128,7 @@ impl DiceExpression {
         }
     }
 
+
     pub fn sum(self) -> DiceExpression {
         Sum(Box::new(self))
     }
