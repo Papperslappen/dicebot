@@ -18,15 +18,6 @@ struct Roll{
     trivial: bool,
 }
 
-async fn index() -> impl Responder {
-    HttpResponse::Ok().body("")
-}
-
-async fn greet(req: HttpRequest) -> impl Responder {
-    let name = req.match_info().get("name").unwrap_or("World");
-    format!("Hello {}!", &name)
-}
-
 async fn roll(req: HttpRequest) -> impl Responder {
     let expression = req.match_info().get("roll").unwrap_or("d6");
     let parsed_expression = parse(expression);
