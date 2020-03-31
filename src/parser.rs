@@ -153,7 +153,7 @@ pub fn simple_dice_parser<'a>() -> Parser<'a,u8,DiceExpression> {
     expression() - end()
 }
 
-pub fn parse(s:String) -> Result<DiceExpression,&'static str> {
+pub fn parse(s:&str) -> Result<DiceExpression,&'static str> {
     let p = simple_dice_parser();
     if let Ok(p) = p.parse(s.as_bytes()){
         Ok(p)

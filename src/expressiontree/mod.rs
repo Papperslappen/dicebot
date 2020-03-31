@@ -1,8 +1,9 @@
 use std::fmt;
 pub mod roll;
 pub mod probability;
+use serde::Serialize;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Serialize,Debug, PartialEq, Eq, Clone)]
 pub enum DiceExpression{
     Many(Vec<DiceExpression>),
     Sum(Box<DiceExpression>),
@@ -110,13 +111,13 @@ impl DiceExpression {
     }
 
     // Return the number of elements
-    pub fn size(&self) -> i64{
+    pub fn size(&self) -> usize{
         match self {
             Sum(e) | Negative(e) | Min(e) | Max(e) => {
                 e.size()
             },
             Many(v) => {
-                v.iter().fold(0i64,|acc,x| acc+x.size())
+                v.iter().fold(0,|acc,x| acc+x.size())
             }
             Add(l,r)
             | Multiply(l,r)
@@ -127,7 +128,6 @@ impl DiceExpression {
             Constant(_) | Die(_) | Outcome(_,_) => 1
         }
     }
-
 
     pub fn sum(self) -> DiceExpression {
         Sum(Box::new(self))

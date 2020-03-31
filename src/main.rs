@@ -1,53 +1,73 @@
-#![feature(proc_macro_hygiene, decl_macro)]
-
-#[macro_use] extern crate rocket;
-#[macro_use] extern crate rocket_contrib;
-use rocket_contrib::json::JsonValue;
+use actix_web::{web, error, App, Error, HttpRequest, HttpResponse, HttpServer, Responder};
 
 mod parser;
 mod expressiontree;
 
 use parser::parse;
 
-use std::str;
 use std::env;
 use std::io::{self,BufRead};
 
+use serde::Serialize;
 
-#[get("/")]
-fn index() -> &'static str {
-    ""
+#[derive(Serialize)]
+struct Roll{
+    outcome: expressiontree::DiceExpression,
+    result: Vec<i64>,
+    size: usize,
+    trivial: bool,
 }
 
-#[get("/roll/<s>")]
-fn roll(s:String) -> JsonValue {
-    let parsed_expression = parse(s);
+async fn index() -> impl Responder {
+    HttpResponse::Ok().body("")
+}
+
+async fn greet(req: HttpRequest) -> impl Responder {
+    let name = req.match_info().get("name").unwrap_or("World");
+    format!("Hello {}!", &name)
+}
+
+async fn roll(req: HttpRequest) -> impl Responder {
+    let expression = req.match_info().get("roll").unwrap_or("d6");
+    let parsed_expression = parse(expression);
     match  parsed_expression{
         Ok(expression) => {
-            if expression.size() <= 1001 {
-                json!({"result":expression.roll(),
-                       "trivial":expression.trivial(),
-                       "size":expression.size()})
+            if expression.size() <= 2001 {
+                    let outcome = expression.outcome();
+                    let roll = Roll{
+                        outcome: outcome.clone(),
+                        result: outcome.roll(),
+                        size: outcome.size(),
+                        trivial: outcome.trivial(),
+                    };
+                    Ok(HttpResponse::Ok().json(roll))
                 } else {
-                    json!({})
+                    Err(error::ErrorBadRequest("Expression too large"))
                 }
         },
-        Err(_) => json!({})
+        Err(_) => Err(error::ErrorBadRequest("Malformed Request"))
     }
 }
 
-fn main() {
+#[actix_rt::main]
+async fn main() -> std::io::Result<()>{
     if env::args().any(|s| s=="cmd") {
         println!("CMD mode");
         let stdin = io::stdin();
         for line in stdin.lock().lines() {
-            if let Ok(result) = parse(line.unwrap()){
+            if let Ok(result) = parse(&line.unwrap()){
                 let roll = result.outcome();
-                println!("{} = {:?} , size: {}",roll,roll.roll(),roll.size());
+                let serialized = serde_json::to_string(&roll).unwrap();
+                println!("{} = {:?} , size: {}",serialized,roll.roll(),roll.size());
             }
         }
+        Ok(())
     }
     else {
-        rocket::ignite().mount("/", routes![index,roll]).launch();
+        HttpServer::new(|| App::new()
+        .route(r"/roll/{roll}", web::get().to(roll)))
+            .bind("127.0.0.1:6810")?
+            .run()
+            .await
     }
 }
