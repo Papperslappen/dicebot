@@ -16,7 +16,7 @@ pub enum DiceExpression{
     Negative(Box<DiceExpression>),
     Constant(i64),
     Die(i64),
-    Outcome(i64,i64)
+    DieOutcome(i64,i64)
 }
 
 use DiceExpression::*;
@@ -93,7 +93,7 @@ impl fmt::Display for DiceExpression {
             Many(v) => {
                 write!(f,"{}",v.iter().fold(String::new(),|acc,val| acc+format!("{}",val).as_str()+",").trim_end_matches(','))
             },
-            Outcome(sides,result) => {
+            DieOutcome(sides,result) => {
                 write!(f,"d{}:{}",sides,result)
             }
         }
@@ -125,7 +125,7 @@ impl DiceExpression {
             | LessThan(l,r) => {
                 l.size() + r.size()
             },
-            Constant(_) | Die(_) | Outcome(_,_) => 1
+            Constant(_) | Die(_) | DieOutcome(_,_) => 1
         }
     }
 

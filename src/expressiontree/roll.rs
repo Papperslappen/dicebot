@@ -40,7 +40,7 @@ impl DiceExpression {
             Many(v) => {
                 v.iter().map(|x| x.roll()).flatten().collect()
             },
-            Outcome(_,result) => vec!(*result)
+            DieOutcome(_,result) => vec!(*result)
         }
     }
 
@@ -51,7 +51,7 @@ impl DiceExpression {
             Die(sides) => {
                 let dice = Uniform::new_inclusive(1,sides);
                 let mut rng = rand::thread_rng();
-                Outcome(*sides,dice.sample(&mut rng) as i64)
+                DieOutcome(*sides,dice.sample(&mut rng) as i64)
             },
             Sum(e) => {
                 Sum(Box::new(e.outcome()))
@@ -80,7 +80,7 @@ impl DiceExpression {
             Many(v) => {
                 Many(v.iter().map(|x| x.outcome()).collect())
             },
-            Outcome(sides,result) => Outcome(*sides,*result)
+            DieOutcome(sides,result) => DieOutcome(*sides,*result)
         }
     }
 }
