@@ -1,4 +1,7 @@
-use actix_web::{web, error, App, Error, HttpRequest, HttpResponse, HttpServer, Responder};
+use actix_web::{web, error, App, HttpRequest, HttpResponse, HttpServer, Responder};
+use actix_web::middleware::Logger;
+
+use env_logger::Env;
 
 mod parser;
 mod expressiontree;
@@ -36,7 +39,7 @@ async fn roll(req: HttpRequest) -> impl Responder {
                     Err(error::ErrorBadRequest("Expression too large"))
                 }
         },
-        Err(_) => Err(error::ErrorBadRequest("Malformed Request"))
+        Err(_) => Err(error::ErrorBadRequest("Could not parse expression"))
     }
 }
 
@@ -55,8 +58,11 @@ async fn main() -> std::io::Result<()>{
         Ok(())
     }
     else {
+        std::env::set_var("RUST_LOG", "actix_web=info");
+        env_logger::init();
         HttpServer::new(|| App::new()
-        .route(r"/roll/{roll}", web::get().to(roll)))
+            .wrap(Logger::default())
+            .route(r"/roll/{roll}", web::get().to(roll)))
             .bind("127.0.0.1:6810")?
             .run()
             .await
