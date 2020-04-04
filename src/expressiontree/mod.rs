@@ -35,7 +35,11 @@ impl fmt::Display for DiceExpression {
                 write!(f,"d{}",sides)
             },
             Sum(e) => {
-                write!(f,"sum({})",e)
+                match &**e { //?????
+                    Many(v) => write!(f,"{}",v.iter().map(|x| format!("{}",x)).collect::<Vec<String>>().join(" + ")),
+                    _ => write!(f,"sum({})",e)
+                }
+
             },
             Negative(e) => {
                 if e.size() > 1 {
@@ -94,7 +98,7 @@ impl fmt::Display for DiceExpression {
                 write!(f,"{}",v.iter().fold(String::new(),|acc,val| acc+format!("{}",val).as_str()+",").trim_end_matches(','))
             },
             DieOutcome(sides,result) => {
-                write!(f,"d{}:{}",sides,result)
+                write!(f,"(d{}):{}",sides,result)
             }
         }
     }
@@ -114,7 +118,7 @@ impl DiceExpression {
     pub fn size(&self) -> usize{
         match self {
             Sum(e) | Negative(e) | Min(e) | Max(e) => {
-                e.size()
+                1+e.size()
             },
             Many(v) => {
                 v.iter().fold(0,|acc,x| acc+x.size())
@@ -123,9 +127,30 @@ impl DiceExpression {
             | Multiply(l,r)
             | Equal(l,r)
             | LessThan(l,r) => {
-                l.size() + r.size()
+                1+l.size() + r.size()
             },
-            Constant(_) | Die(_) | DieOutcome(_,_) => 1
+            Constant(_) => 1,
+            Die(_) | DieOutcome(_,_) => 1
+        }
+    }
+
+    // Return the number of elements
+    pub fn number_of_rolls(&self) -> usize{
+        match self {
+            Sum(e) | Negative(e) | Min(e) | Max(e) => {
+                e.number_of_rolls()
+            },
+            Many(v) => {
+                v.iter().fold(0,|acc,x| acc+x.number_of_rolls())
+            }
+            Add(l,r)
+            | Multiply(l,r)
+            | Equal(l,r)
+            | LessThan(l,r) => {
+                l.number_of_rolls() + r.number_of_rolls()
+            },
+            Constant(_) => 0,
+            Die(_) | DieOutcome(_,_) => 1
         }
     }
 

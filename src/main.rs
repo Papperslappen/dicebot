@@ -16,8 +16,10 @@ use serde::Serialize;
 #[derive(Serialize)]
 struct Roll{
     outcome: expressiontree::DiceExpression,
+    formula: String,
     result: Vec<i64>,
     size: usize,
+    number_of_rolls: usize,
     trivial: bool,
 }
 
@@ -30,8 +32,10 @@ async fn roll(req: HttpRequest) -> impl Responder {
                     let outcome = expression.outcome();
                     let roll = Roll{
                         outcome: outcome.clone(),
+                        formula: format!("{}", outcome),
                         result: outcome.roll(),
                         size: outcome.size(),
+                        number_of_rolls: outcome.number_of_rolls(),
                         trivial: outcome.trivial(),
                     };
                     Ok(HttpResponse::Ok().json(roll))
