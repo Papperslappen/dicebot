@@ -1,6 +1,5 @@
 use std::fmt;
 pub mod roll;
-pub mod probability;
 use serde::Serialize;
 
 #[derive(Serialize,Debug, PartialEq, Eq, Clone)]
